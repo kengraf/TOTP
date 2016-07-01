@@ -1,5 +1,6 @@
-Python HOTP example
+Python OTP example that works with Google Authenticator.
 
 Basic functions to generate and validate TOTP and HOTP codes.
 
-No secret nor user management provided.
+Missing secure secret generation
+No user management.

@@ -31,7 +31,7 @@ var secret = 'MZXW633PN5XW6MZX';
 
 secretURL = "https://chart.googleapis.com/chart?chs=200x200&chld=M|0&cht=qr&chl=" +
 	"otpauth://totp/" + name + "?secret=" + secret;
-document.getElementById('qr_secret').innerHtml = secretURL;
+document.getElementById('qr_secret').innerHTML = secretURL;
 document.getElementById('qr_image').src = secretURL;
 }
 </script>
@@ -41,7 +41,7 @@ document.getElementById('qr_image').src = secretURL;
 <h1>Validate Google Authenticator Device</h1>
 
 <img src="nothing.jpg" id="qr_image" name="qr_image"/>
-<p id="secret"></p>
+<p id="qr_secret"></p>
 
 <form action="/registerTOTP">
   Enter 1st code:

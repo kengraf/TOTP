@@ -1,7 +1,2 @@
 http.server
 urllib.parse
-hmac
-base64
-struct
-hashlib
-time

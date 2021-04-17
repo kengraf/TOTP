@@ -1,7 +1,7 @@
 #!/usr/bin/python
 from http.server import BaseHTTPRequestHandler,HTTPServer
 from urllib.parse import urlparse
-import hmac, base64, struct, hashlib, time
+import hmac, base64, struct, hashlib, time, random
 
 PORT_NUMBER = 8080
 
@@ -19,6 +19,19 @@ def get_hotp_token(secret, intervals_no):
 def get_totp_token(secret):
     return get_hotp_token(secret, intervals_no=int(time.time()/30))
 
+def generate_QR_code(name):
+    secret = random.randrange(16**16)
+    print('%016x' % secret )
+    return get_QR_code_image(secret, name)
+    
+def get_QR_code_image(secret, name):
+    gURL = "https://chart.googleapis.com/chart?chs=200x200&chld=M|0&cht=qr&chl="
+    gArg = "otpauth://totp/" + name + "?secret=" + secret
+    with urllib.request.urlopen(gURL + gArg) as response:
+        html = response.read()    
+    return html
+	
+
 def get_QR_code(secret, query_components):
     html = """<!DOCTYPE html>
 <html><head><meta charset="UTF-8"></head>
@@ -26,8 +39,7 @@ def get_QR_code(secret, query_components):
 function load() {
 var secret = '""" + secret + """';
 var name = '""" + query_components.get("name", "Alice") + """';
-document.getElementById('qr_image').src = 
-	"https://chart.googleapis.com/chart?chs=200x200&chld=M|0&cht=qr&chl=" +
+document.getElementById('qr_image').src = "https://chart.googleapis.com/chart?chs=200x200&chld=M|0&cht=qr&chl=" +
 	"otpauth://totp/" + name + "?secret=" + secret;
 }
 </script>
@@ -53,9 +65,10 @@ def register_TOTP(secret, query_components):
             html = "Success"
     return html
 
-def validate_TOTP(secret, query_components):
+def validate_TOTP(secret, query_components, code=0):
     html = 'Failure'
-    code = int(query_components.get("code", "0"))
+    if code == 0:
+        code = int(query_components.get("code", "0"))
     if ( code == get_hotp_token(secret, int(time.time()/30)) ):
         html = "Success"
     return html
@@ -131,15 +144,20 @@ class myHandler(BaseHTTPRequestHandler):
         self.wfile.write (action(secret, query_components).encode())
         return
     
-try:
-    #Create a web server and define the handler to manage the
-    #incoming request
-    server = HTTPServer(('', PORT_NUMBER), myHandler)
-    print ('Started httpserver on port {0:4d}'.format(PORT_NUMBER) )
-
-    #Wait forever for incoming htto requests
-    server.serve_forever()
-
-except KeyboardInterrupt:
-    print ('^C received, shutting down the web server' )
-    server.socket.close()
+def startServer():
+    try:
+        #Create a web server and define the handler to manage the
+        #incoming request
+        server = HTTPServer(('', PORT_NUMBER), myHandler)
+        print ('Started httpserver on port {0:4d}'.format(PORT_NUMBER) )
+    
+        #Wait forever for incoming htto requests
+        server.serve_forever()
+    
+    except KeyboardInterrupt:
+        print ('^C received, shutting down the web server' )
+        server.socket.close()
+    
+# Module test code
+if __name__ == "__main__":
+    startServer()

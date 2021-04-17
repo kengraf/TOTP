@@ -1,7 +1,7 @@
 #!/usr/bin/python
 from http.server import BaseHTTPRequestHandler,HTTPServer
 from urllib.parse import urlparse
-import hmac, base64, struct, hashlib, time, random
+import requests, hmac, base64, struct, hashlib, time, random
 
 PORT_NUMBER = 8080
 
@@ -20,15 +20,14 @@ def get_totp_token(secret):
     return get_hotp_token(secret, intervals_no=int(time.time()/30))
 
 def generate_QR_code(name):
-    secret = random.randrange(16**16)
-    print('%016x' % secret )
+    secret = '%016x' % random.randrange(16**16)
+    print( 'secret= %s' % secret )
     return get_QR_code_image(secret, name)
     
 def get_QR_code_image(secret, name):
     gURL = "https://chart.googleapis.com/chart?chs=200x200&chld=M|0&cht=qr&chl="
     gArg = "otpauth://totp/" + name + "?secret=" + secret
-    with urllib.request.urlopen(gURL + gArg) as response:
-        html = response.read()    
+    html = requests.get(gURL + gArg)
     return html
 	
 
@@ -160,4 +159,5 @@ def startServer():
     
 # Module test code
 if __name__ == "__main__":
+    generate_QR_code('alice')
     startServer()

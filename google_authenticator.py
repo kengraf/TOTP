@@ -20,7 +20,8 @@ def get_totp_token(secret):
     return get_hotp_token(secret, intervals_no=int(time.time()/30))
 
 def generate_QR_code(name):
-    secret = '%016x' % random.randrange(16**16)
+#    secret = '%016x' % random.randrange(16**16)
+    secret = ''.join(random.SystemRandom().choice('ABCDEFGHIJKLMNOPQRSTUVWXYZ234567') for _ in range(16))
     print( 'secret= %s' % secret )
     return get_QR_code_image(secret, name)
     

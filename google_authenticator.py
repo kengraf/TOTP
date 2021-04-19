@@ -23,24 +23,27 @@ def get_otp_token(secret, counter):
     hash = hmac.new(key, msg, hashlib.sha1).digest()
     offset = hash[19] & 15
     code = (struct.unpack(">I", hash[offset:offset+4])[0] & 0x7fffffff) % 1000000
-    return code
+    return str('%06d' % code)
 
-def generateSecret(name='unknown'):
+def generateSecret():
     # Using 16 random base32 characters
     return ''.join(random.SystemRandom().choice('ABCDEFGHIJKLMNOPQRSTUVWXYZ234567') for _ in range(16))
 
+def timeInterval():
+    return int(time.time()/30)
+
 def currentHOTP(name='unknown'):
     # HMAC based OATH authenication
-    return get_otp_token(SECRETS[name], HOTP_COUNTER)
+    return get_otp_token(SECRETS.get(name,'unknown'), HOTP_COUNTER)
 
 def currentTOTP(name='unknown'):
     # TIME based OATH authenication
-    return get_otp_token(SECRETS[name], int(time.time()/30))
+    return get_otp_token(SECRETS.get(name,'unknown'), timeInterval())
 
 def rolloverTOTP(name='unknown'):
     # Demostrate TOTP rollover to next time interval
     remaining = time.time() % 30
-    print('code=%s seconds to overover=%d' % (currentTOTP(name),remaining))
+    print('code=%s seconds to rollover=%d' % (currentTOTP(name),remaining))
     time.sleep(remaining)
     print('code=%s' % (currentTOTP(name)))
     return
@@ -48,20 +51,19 @@ def rolloverTOTP(name='unknown'):
 def validateHOTP(query_components):
     # Validate user's HOTP attempt
     global HOTP_COUNTER
-    code = int(query_components.get('code'))
-    name = query_components.get('name')  
+    code = query_components.get('code')
+    name = query_components.get('name','unknown')  
     for i in range(HOTP_COUNTER,HOTP_COUNTER+HOTP_SKEW):
-        if code == get_otp_token(SECRETS[name], i):
+        if code == get_otp_token(SECRETS.get(name,'unknown'), i):
             HOTP_COUNTER = i + 1
             return 'Validated'
     return 'Failed'
 
 def validateTOTP(query_components):
     # Validate user's TOTP attempt, no consideration for clock skew
-    code = int(query_components.get('code'))
+    code = query_components.get('code')
     name = query_components.get('name','unknown')
-    interval = int(time.time()/30)
-    if code == get_otp_token(SECRETS[name], interval):
+    if code == get_otp_token(SECRETS.get(name,'unknown'), timeInterval()):
         return 'Validated' 
     return 'Failed'
 
@@ -70,19 +72,19 @@ def registerUser(query_components):
     user = query_components.get('name')
     secret = query_components.get('secret')
     SECRETS[user] = secret
-    return
+    return user + ' registered with secret: ' + secret
 
-def showQRonly(secret, name):
+def showQR(secret, name):
     gURL = 'https://chart.googleapis.com/chart?chs=200x200&chld=M|0&cht=qr&chl='
-    gArg = '/totp/' + name + '?secret=' + secret
+    gArg = '/validateTOTP?' + name + '?secret=' + secret
     html = requests.get(gURL + HOST_URL + gArg)
     return html
 	
-def get_QR_code(query_components):
-    name = query_components.get('name', 'unknowm')
-    secret = SECRETS.get(name)    
+def defaultPage(query_components):
+    name = query_components.get('name', 'unknown')
+    secret = SECRETS.get(name,'unknown')
     gURL = 'https://chart.googleapis.com/chart?chs=200x200&chld=M|0&cht=qr&chl'
-    gArg = '/totp/' + name + '?secret=' + secret
+    gArg = '/validateTOTP?' + name + '&secret=' + secret
     qrURL = gURL + HOST_URL + gArg
     html = """<!DOCTYPE html>
 <html><head><meta charset="UTF-8"></head>
@@ -94,37 +96,41 @@ document.getElementById('qr_image').src = '""" + qrURL + """';
 }
 </script>
 <body onload="load()"><h1>Validate Device</h1>
-<h3>Current TOTP : """ + TO + """ Current HOTP: """ + CURRENT_HOTP + """<h3>
+<h3>Current TOTP : """ + currentTOTP() + """</h3>
+<h3>Current HOTP: """ + currentHOTP() +  "&nbsp;&nbsp;HOTP Counter: " + str(HOTP_COUNTER) + """<h3>
 <img src="nothing.jpg" id="qr_image" name="qr_image"/>
-<form action="/registerTOTP">
-  Enter 1st code:
-  <input type="text" name="code1"><br/><br/>
-  After roll over enter 2nd code:
-  <input type="text" name="code2"><br/><br/>
-  <input type="submit" value="Validate">
-</form></body></html>"""
-    return html
-
-
-def show_help(query_components):
-    html = """<h1>How to use this service</h1><br/>
-    Replace [yoursecret] with your 16 character base32 value<br/><br/>""" + HOST_URL + """</br/>
-    Add new account: /getQRcode?name=[yourname]?secret=[yoursecret]
-    This will respond with a QR code and two code boxes to setup a new Authenticator account on your device.  Pressing the validate button will confirm the server and your device agree.<br/>
-    <br/>
-    Validate account: /registerTOTPtoken?code1=379972&code2=165691?secret=MZXW633PN5XW6MZX">http://localhost:8080/registerTOTPtoken?code1=379972&code2=165691?secret=[yoursecret]<a/><br/>
-    <br/>
-    Validate code: <a href="http://localhost:8080/validateTOTP?code=379972?secret=MZXW633PN5XW6MZX">http://localhost:8080/validateTOTPtoken?code=379972?secret=[yoursecret]<a/><br/>
-    <br/>
-    """
+<form action="/registerUser">
+  <label for="username">Register User:</label>
+  <input type="text" name="name" placeholder="username">
+  <label for="secret">Secret:</label>
+  <input type="text" name="secret" value='""" + generateSecret() + """'>
+  <input type="submit" value="registerUser">
+</form>
+<form action="/validateTOTP">
+    <label for="username">Validate TOPT for user:</label>
+    <input type="text" name="name" placeholder="username">
+    <label for="code">Code:</label>
+    <input type="text" name="code" placeholder='code'>
+    <input type="submit" value="validateTOTP">
+</form>
+<form action="/validateHOTP">
+    <label for="username">Validate HOPT for user:</label>
+    <input type="text" name="name" placeholder="username">
+    <label for="code">Code:</label>
+    <input type="text" name="code" placeholder='code'>
+    <input type="submit" value="validateHOTP">
+</form>
+<h1>How to use this service</h1>
+Replace [yoursecret] with your 16 character base32 value<br/>
+Add new account: """ + HOST_URL + """/registerUser?name=[yourname]?secret=[yoursecret]<br/>
+Validate TOPT: """ + HOST_URL + """/validateTOTP?name=[yourname]?code=[your topt code]<br/>
+Validate HOPT: """ + HOST_URL + """/validateHOTP?name=[yourname]?code=[your hopt code]</body></html>"""
     return html
 
 action_statements = {
-    "/getQRcode": get_QR_code,
-    "/register": registerUser,
+    "/registerUser": registerUser,
     "/validateHOTP": validateHOTP,
     "/validateTOTP": validateTOTP,
-    "/help": show_help
 }
 
 #This class will handles any incoming request from the browser 
@@ -138,7 +144,7 @@ class OTPserver(BaseHTTPRequestHandler):
         self.end_headers()
 
         action = urlparse(self.path).path
-        method = action_statements.get(action,show_help)
+        method = action_statements.get(action,defaultPage)
         
         if method == None : return
         
@@ -153,9 +159,9 @@ class OTPserver(BaseHTTPRequestHandler):
         return
     
 def startServer(host='', port=8080):
+    global HOST_URL
     try:
-        #Create a web server and define the handler to manage the
-        #incoming request
+        # Create a web server and define the handler to manage the incoming request
         server = HTTPServer((host, port), OTPserver)
         HOST_URL = 'http://%s:%4d'  % (host,port)
         print ('Started httpserver: ' + HOST_URL )
@@ -170,15 +176,15 @@ def startServer(host='', port=8080):
 # Module test code
 def selfTest():
     print( "generateSecret=%s" % generateSecret())
-    print( "currentHOTP=%d" % currentHOTP())
-    print( "currentTOTP=%d" % currentTOTP())
+    print( "currentHOTP=%s" % currentHOTP())
+    print( "currentTOTP=%s" % currentTOTP())
     
     secret = generateSecret()
     name = 'alice'
     registerUser({'name':name,'secret':secret})
     topt = currentTOTP(name)
     hopt = currentHOTP(name)
-    print("Registered %s, secret= %s, topt= %06d, hopt=%06d" % (name, secret, topt, hopt))
+    print("Registered %s, secret= %s, topt= %s, hopt=%s" % (name, secret, topt, hopt))
 
     print("Validate topt= %s" % validateTOTP({'name':'alice','code':topt}))
     print("Validate hopt= %s" % validateHOTP({'name':'alice','code':hopt}))
@@ -186,7 +192,7 @@ def selfTest():
     # errors
     rolloverTOTP()
     print("Validate old topt= %s (should fail)" % validateHOTP({'name':'alice','code':topt}))
-    hopt = get_otp_token(SECRETS[name], HOTP_COUNTER+20)
+    hopt = get_otp_token(SECRETS.get(name,'unknown'), HOTP_COUNTER+20)
     print("Invalid hopt=1 %s (should fail)" % validateHOTP({'name':'alice','code':1}))
     print("Validate hopt=+20 %s (should fail)" % validateHOTP({'name':'alice','code':hopt}))
 

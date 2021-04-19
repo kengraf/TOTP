@@ -44,7 +44,7 @@ def rolloverTOTP(name='unknown'):
     # Demostrate TOTP rollover to next time interval
     remaining = time.time() % 30
     print('code=%s seconds to rollover=%d' % (currentTOTP(name),remaining))
-    time.sleep(remaining)
+    time.sleep(remaining+1)
     print('code=%s' % (currentTOTP(name)))
     return
 
@@ -201,5 +201,4 @@ def selfTest():
 if __name__ == "__main__":
     HOST = socket.gethostbyname(socket.gethostname())
     PORT = 8080
-    selfTest()
     startServer( HOST, PORT)

@@ -162,7 +162,7 @@ def startServer(host='', port=8080):
     global HOST_URL
     try:
         # Create a web server and define the handler to manage the incoming request
-        server = HTTPServer((host, port), OTPserver)
+        server = HTTPServer(('', port), OTPserver)
         HOST_URL = 'http://%s:%4d'  % (host,port)
         print ('Started httpserver: ' + HOST_URL )
     

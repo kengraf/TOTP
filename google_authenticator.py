@@ -82,7 +82,11 @@ def showQR(secret, name):
 	
 def defaultPage(query_components):
     name = query_components.get('name', 'unknown')
-    secret = SECRETS.get(name,'unknown')
+    secret = SECRETS.get(name)
+    if secret == None:
+        name = 'unknown'
+        secret = SECRETS.get(name)
+        
     gURL = 'https://chart.googleapis.com/chart?chs=200x200&chld=M|0&cht=qr&chl'
     gArg = '/validateTOTP?' + name + '&secret=' + secret
     qrURL = gURL + HOST_URL + gArg
@@ -96,8 +100,8 @@ document.getElementById('qr_image').src = '""" + qrURL + """';
 }
 </script>
 <body onload="load()"><h1>Validate Device</h1>
-<h3>Current TOTP : """ + currentTOTP() + """</h3>
-<h3>Current HOTP: """ + currentHOTP() +  "&nbsp;&nbsp;HOTP Counter: " + str(HOTP_COUNTER) + """<h3>
+<h3>Current TOTP for (""" + name + '): ' + currentTOTP(name) + """</h3>
+<h3>Current HOTP: """ + currentHOTP(name) +  "&nbsp;&nbsp;HOTP Counter: " + str(HOTP_COUNTER) + """<h3>
 <img src="nothing.jpg" id="qr_image" name="qr_image"/>
 <form action="/registerUser">
   <label for="username">Register User:</label>
@@ -200,5 +204,5 @@ def selfTest():
 # Running as a program starts a server, user secrets do NOT persist
 if __name__ == "__main__":
     HOST = socket.gethostbyname(socket.gethostname())
-    PORT = 8080
+    PORT = 80
     startServer( HOST, PORT)

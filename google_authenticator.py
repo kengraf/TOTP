@@ -42,7 +42,7 @@ def currentTOTP(name='unknown'):
 
 def rolloverTOTP(name='unknown'):
     # Demostrate TOTP rollover to next time interval
-    remaining = time.time() % 30
+    remaining = 30 - time.time() % 30
     print('code=%s seconds to rollover=%d' % (currentTOTP(name),remaining))
     time.sleep(remaining+1)
     print('code=%s' % (currentTOTP(name)))
@@ -100,7 +100,7 @@ document.getElementById('qr_image').src = '""" + qrURL + """';
 }
 </script>
 <body onload="load()"><h1>Validate Device</h1>
-<h3>Current TOTP for (""" + name + ') ' + str(int(time.time()%30)) + ' seconds to rollover: ' + currentTOTP(name) + """</h3>
+<h3>Current TOTP for (""" + name + ') ' + str(30-int(time.time()%30)) + ' seconds to rollover: ' + currentTOTP(name) + """</h3>
 <h3>Current HOTP: """ + currentHOTP(name) +  "&nbsp;&nbsp;HOTP Counter: " + str(HOTP_COUNTER) + """<h3>
 <img src="nothing.jpg" id="qr_image" name="qr_image"/>
 <form action="/registerUser">

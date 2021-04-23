@@ -126,9 +126,10 @@ document.getElementById('qr_image').src = '""" + qrURL + """';
 </form>
 <h1>How to use this service</h1>
 Replace [yoursecret] with your 16 character base32 value<br/>
-Add new account: """ + HOST_URL + """/registerUser?name=[yourname]?secret=[yoursecret]<br/>
-Validate TOPT: """ + HOST_URL + """/validateTOTP?name=[yourname]?code=[your topt code]<br/>
-Validate HOPT: """ + HOST_URL + """/validateHOTP?name=[yourname]?code=[your hopt code]</body></html>"""
+See user data: /?name=[yourname]<br/>
+Add new account: /registerUser?name=[yourname]?secret=[yoursecret]<br/>
+Validate TOPT: /validateTOTP?name=[yourname]?code=[your topt code]<br/>
+Validate HOPT: /validateHOTP?name=[yourname]?code=[your hopt code]</body></html>"""
     return html
 
 action_statements = {

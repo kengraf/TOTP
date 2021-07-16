@@ -15,7 +15,7 @@ import threading
 
 HOST_URL = '' # Set when the server starts, global for self test
 SECRETS = {'unknown':'MZXW633PN5XW6MZX'} # Key is username, value is the user's secret
-HOTP_COUNTER = 123456 # Not very secure 1) guessable 2) all SECRETS share
+HOTP_COUNTER = 223456 # Not very secure 1) guessable 2) all SECRETS share
 HOTP_SKEW = 10 # Range that we allow for over active client
 
 def get_otp_token(secret, counter):
@@ -34,10 +34,6 @@ def generateSecret():
 def timeInterval():
     return int(time.time()/30)
 
-def currentHOTP(name='unknown'):
-    # HMAC based OATH authenication
-    return get_otp_token(SECRETS.get(name,'unknown'), HOTP_COUNTER)
-
 def currentTOTP(name='unknown'):
     # TIME based OATH authenication
     return get_otp_token(SECRETS.get(name,'unknown'), timeInterval())
@@ -53,14 +49,14 @@ def rolloverTOTP(name='unknown'):
 def validateHOTP(query_components):
     # Validate user's HOTP attempt
     global HOTP_COUNTER
-    html = defaultPage(query_components)
-    code = query_components.get('code')
     name = query_components.get('name','unknown')
-    for i in range(HOTP_COUNTER,HOTP_COUNTER+HOTP_SKEW):
-        if code == get_otp_token(SECRETS.get(name,'unknown'), i):
-            HOTP_COUNTER = i + 1
-        return html + '<h1>Validated</h1>'
-    return html + '<h1>Failed</h1>'
+    code = int(query_components.get('code'))
+    html = '<h1>Failed</h1>'
+    for i in range(HOTP_COUNTER-HOTP_SKEW,HOTP_COUNTER+HOTP_SKEW):
+        if code  == i:
+            HOTP_COUNTER = code + 1
+            html = '<h1>Validated</h1>'
+    return defaultPage(query_components) + html
 
 def validateTOTP(query_components):
     # Validate user's TOTP attempt, no consideration for clock skew
@@ -106,7 +102,7 @@ document.getElementById('qr_image').src = '""" + qrURL + """';
 </script>
 <body onload="load()"><h1>Validate Device</h1>
 <h3>Current TOTP for (""" + name + ') ' + str(30-int(time.time()%30)) + ' seconds to rollover: ' + currentTOTP(name) + """</h3>
-<h3>Current HOTP: """ + currentHOTP(name) +  "&nbsp;&nbsp;HOTP Counter: " + str(HOTP_COUNTER) + """<h3>
+<h3>Current HOTP: """ + str(HOTP_COUNTER) + """<h3>
 <img src="nothing.jpg" id="qr_image" name="qr_image"/>
 <form action="/registerUser">
   <label for="username">Register User:</label>

@@ -2,6 +2,8 @@
 from http.server import BaseHTTPRequestHandler,HTTPServer
 from urllib.parse import urlparse
 import requests, hmac, base64, struct, hashlib, time, random, socket
+from socketserver import ThreadingMixIn
+import threading
 
 # Takes a secret and a time interval, returning a token.
 # Success if it matches what the user provided
@@ -51,42 +53,45 @@ def rolloverTOTP(name='unknown'):
 def validateHOTP(query_components):
     # Validate user's HOTP attempt
     global HOTP_COUNTER
+    html = defaultPage(query_components)
     code = query_components.get('code')
-    name = query_components.get('name','unknown')  
+    name = query_components.get('name','unknown')
     for i in range(HOTP_COUNTER,HOTP_COUNTER+HOTP_SKEW):
         if code == get_otp_token(SECRETS.get(name,'unknown'), i):
             HOTP_COUNTER = i + 1
-            return 'Validated'
-    return 'Failed'
+        return html + '<h1>Validated</h1>'
+    return html + '<h1>Failed</h1>'
 
 def validateTOTP(query_components):
     # Validate user's TOTP attempt, no consideration for clock skew
+    html = defaultPage(query_components)
     code = query_components.get('code')
     name = query_components.get('name','unknown')
     if code == get_otp_token(SECRETS.get(name,'unknown'), timeInterval()):
-        return 'Validated' 
-    return 'Failed'
+        return html + '<h1>Validated</h1>'
+    return html + '<h1>Failed</h1>'
 
 def registerUser(query_components):
     # Add a new user
+    html = defaultPage(query_components)
     user = query_components.get('name')
     secret = query_components.get('secret')
     SECRETS[user] = secret
-    return user + ' registered with secret: ' + secret
+    return html + '<h1>' + user + ' registered with secret: ' + secret + '</h1>'
 
 def showQR(secret, name):
     gURL = 'https://chart.googleapis.com/chart?chs=200x200&chld=M|0&cht=qr&chl='
     gArg = '/validateTOTP?' + name + '?secret=' + secret
     html = requests.get(gURL + HOST_URL + gArg)
     return html
-	
+
 def defaultPage(query_components):
     name = query_components.get('name', 'unknown')
     secret = SECRETS.get(name)
     if secret == None:
         name = 'unknown'
         secret = SECRETS.get(name)
-        
+
     gURL = 'https://chart.googleapis.com/chart?chs=200x200&chld=M|0&cht=qr&chl'
     gArg = '/validateTOTP?' + name + '&secret=' + secret
     qrURL = gURL + HOST_URL + gArg
@@ -138,7 +143,7 @@ action_statements = {
     "/validateTOTP": validateTOTP,
 }
 
-#This class will handles any incoming request from the browser 
+#This class will handles any incoming request from the browser
 class OTPserver(BaseHTTPRequestHandler):
 
     #Handler for the GET requests
@@ -150,9 +155,9 @@ class OTPserver(BaseHTTPRequestHandler):
 
         action = urlparse(self.path).path
         method = action_statements.get(action,defaultPage)
-        
+
         if method == None : return
-        
+
         try:
             query = urlparse(self.path).query
             query_components = dict(qc.split("=") for qc in query.split("&"))
@@ -160,30 +165,33 @@ class OTPserver(BaseHTTPRequestHandler):
             # Missing or malformed query string so use an empty dictionary
             query_components = {"":""}
         self.wfile.write (method(query_components).encode())
-        
+
         return
-    
+
+class ThreadingSimpleServer(ThreadingMixIn,HTTPServer):
+    pass
+
 def startServer(host='', port=8080):
     global HOST_URL
     try:
         # Create a web server and define the handler to manage the incoming request
-        server = HTTPServer(('', port), OTPserver)
+        server = ThreadingSimpleServer(('0.0.0.0', port), OTPserver)
         HOST_URL = 'http://%s:%4d'  % (host,port)
         print ('Started httpserver: ' + HOST_URL )
-    
+
         #Wait forever for incoming htto requests
         server.serve_forever()
-    
+
     except KeyboardInterrupt:
         print ('^C received, shutting down the web server' )
         server.socket.close()
-    
+
 # Module test code
 def selfTest():
     print( "generateSecret=%s" % generateSecret())
     print( "currentHOTP=%s" % currentHOTP())
     print( "currentTOTP=%s" % currentTOTP())
-    
+
     secret = generateSecret()
     name = 'alice'
     registerUser({'name':name,'secret':secret})
@@ -201,7 +209,7 @@ def selfTest():
     print("Invalid hopt=1 %s (should fail)" % validateHOTP({'name':'alice','code':1}))
     print("Validate hopt=+20 %s (should fail)" % validateHOTP({'name':'alice','code':hopt}))
 
-    
+
 # Running as a program starts a server, user secrets do NOT persist
 if __name__ == "__main__":
     HOST = socket.gethostbyname(socket.gethostname())

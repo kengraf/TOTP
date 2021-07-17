@@ -57,9 +57,12 @@ def validateHOTP(query_components):
     code = query_components.get('code')
     html = '<h1>Failed</h1>'
     for i in range(HOTP_COUNTER-HOTP_SKEW,HOTP_COUNTER+HOTP_SKEW):
-        if code  == get_otp_token(SECRETS.get(name,'unknown'),i):
-            HOTP_COUNTER = i + 1
-            html = '<h1>Validated</h1>'
+        try:
+            if code  == get_otp_token(SECRETS.get(name,'unknown'),i):
+                HOTP_COUNTER = i + 1
+                html = '<h1>Validated</h1>'
+        except:
+            break
     return defaultPage(query_components) + html
 
 def validateTOTP(query_components):
@@ -67,8 +70,11 @@ def validateTOTP(query_components):
     html = defaultPage(query_components)
     code = query_components.get('code')
     name = query_components.get('name','unknown')
-    if code == get_otp_token(SECRETS.get(name,'unknown'), timeInterval()):
-        return html + '<h1>Validated</h1>'
+    try:
+        if code == get_otp_token(SECRETS.get(name,'unknown'), timeInterval()):
+            return html + '<h1>Validated</h1>'
+    except:
+        pass
     return html + '<h1>Failed</h1>'
 
 def registerUser(query_components):

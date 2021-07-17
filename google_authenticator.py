@@ -34,6 +34,10 @@ def generateSecret():
 def timeInterval():
     return int(time.time()/30)
 
+def currentHOTP(name='unknown'):
+    # TIME based OATH authenication
+    return get_otp_token(SECRETS.get(name,'unknown'), HOTP_COUNTER)
+
 def currentTOTP(name='unknown'):
     # TIME based OATH authenication
     return get_otp_token(SECRETS.get(name,'unknown'), timeInterval())
@@ -50,11 +54,11 @@ def validateHOTP(query_components):
     # Validate user's HOTP attempt
     global HOTP_COUNTER
     name = query_components.get('name','unknown')
-    code = int(query_components.get('code'))
+    code = query_components.get('code')
     html = '<h1>Failed</h1>'
     for i in range(HOTP_COUNTER-HOTP_SKEW,HOTP_COUNTER+HOTP_SKEW):
-        if code  == i:
-            HOTP_COUNTER = code + 1
+        if code  == get_otp_token(SECRETS.get(name,'unknown'),i):
+            HOTP_COUNTER = i + 1
             html = '<h1>Validated</h1>'
     return defaultPage(query_components) + html
 
@@ -69,10 +73,10 @@ def validateTOTP(query_components):
 
 def registerUser(query_components):
     # Add a new user
-    html = defaultPage(query_components)
     user = query_components.get('name')
     secret = query_components.get('secret')
     SECRETS[user] = secret
+    html = defaultPage(query_components)
     return html + '<h1>' + user + ' registered with secret: ' + secret + '</h1>'
 
 def showQR(secret, name):
@@ -102,7 +106,7 @@ document.getElementById('qr_image').src = '""" + qrURL + """';
 </script>
 <body onload="load()"><h1>Validate Device</h1>
 <h3>Current TOTP for (""" + name + ') ' + str(30-int(time.time()%30)) + ' seconds to rollover: ' + currentTOTP(name) + """</h3>
-<h3>Current HOTP: """ + str(HOTP_COUNTER) + """<h3>
+<h3>Current HOTP: """ + currentHOTP(name) + ' HOTP counter: ' + str(HOTP_COUNTER) + """<h3>
 <img src="nothing.jpg" id="qr_image" name="qr_image"/>
 <form action="/registerUser">
   <label for="username">Register User:</label>

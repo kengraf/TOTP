@@ -112,7 +112,7 @@ document.getElementById('qr_image').src = '""" + qrURL + """';
 </script>
 <body onload="load()"><h1>Validate Device</h1>
 <h3>Current TOTP for (""" + name + ') ' + str(30-int(time.time()%30)) + ' seconds to rollover: ' + currentTOTP(name) + """</h3>
-<h3>Current HOTP: """ + currentHOTP(name) + ' HOTP counter: ' + str(HOTP_COUNTER) + """<h3>
+<h3>HOTP counter: """ + str(HOTP_COUNTER) + '</h3><h3>Current HOTP token: ' + currentHOTP(name) + """</h3>
 <img src="nothing.jpg" id="qr_image" name="qr_image"/>
 <form action="/registerUser">
   <label for="username">Register User:</label>

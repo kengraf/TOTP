@@ -1,0 +1,12 @@
+http
+urllib
+requests
+hmac
+base64
+struct
+hashlib
+time
+random
+socket
+sys
+socketserver

@@ -2,4 +2,4 @@ build:
   docker:
     web: Dockerfile
 run:
-  web: python -m http.server $PORT
+  web: python google-authenticator.py $PORT

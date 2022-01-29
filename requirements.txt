@@ -1,5 +1,4 @@
 html
-urllib
 requests
 hmac
 base64

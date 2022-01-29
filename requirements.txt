@@ -1,12 +1,3 @@
 html
 requests
 hmac
-# base64
-# urllib
-# struct
-# hashlib
-# time
-# random
-# socket
-# sys
-# socketserver

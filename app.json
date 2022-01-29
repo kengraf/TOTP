@@ -1,0 +1,6 @@
+{
+  "name": "TOTP server",
+  "description": "A barebones TOTP/HOTP server",
+  "stack": "container",
+  "keywords": ["cybersecurity", "education", "python", "docker"]
+}

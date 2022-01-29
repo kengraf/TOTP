@@ -1,7 +1,8 @@
 html
 requests
 hmac
-base64
+# base64
+# urllib
 struct
 hashlib
 time

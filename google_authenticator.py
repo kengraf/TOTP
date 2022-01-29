@@ -219,8 +219,8 @@ def selfTest():
 # Running as a program starts a server, user secrets do NOT persist
 if __name__ == "__main__":
     HOST = socket.gethostbyname(socket.gethostname())
-    if len(sys.argv) == 1:
-        PORT = sys.argv[0]
+    if len(sys.argv) == 2:
+        PORT = sys.argv[1]
     else:
         PORT = 8080
     startServer( HOST, PORT)

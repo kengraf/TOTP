@@ -4,5 +4,6 @@ WORKDIR /CODE
 COPY . /CODE
 
 RUN python -m pip install --upgrade pip
-RUN pip install -r requirements.txt --no-cache-dir
+RUN pip install requests
+# RUN pip install -r requirements.txt --no-cache-dir
 EXPOSE 80

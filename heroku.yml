@@ -1,5 +1,0 @@
-build:
-  docker:
-    web: Dockerfile
-run:
-  web: python google_authenticator.py $PORT

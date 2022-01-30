@@ -85,8 +85,8 @@ def registerUser(query_components):
     html = defaultPage(query_components)
     return html + '<h1>' + user + ' registered with secret: ' + secret + '</h1>'
 
-def showQR(secret, name):
-    gURL = 'https://chart.googleapis.com/chart?chs=200x200&chld=M|0&cht=qr&chl='
+def showQR1(secret, name):
+    gURL = 'https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl='
     gArg = '/validateTOTP?' + name + '?secret=' + secret
     html = requests.get(gURL + HOST_URL + gArg)
     return html
@@ -98,16 +98,16 @@ def defaultPage(query_components):
         name = 'unknown'
         secret = SECRETS.get(name)
 
-    gURL = 'https://chart.googleapis.com/chart?chs=200x200&chld=M|0&cht=qr&choe=UTF-8&chl='
+    gURL = 'https://chart.googleapis.com/chart?chs=200x200&cht=qr&choe=UTF-8&chl='
     gArg = '/validateTOTP?' + name + '&secret=' + secret
     qrURL = gURL + HOST_URL + gArg
     html = """<!DOCTYPE html>
 <html><head><meta charset="UTF-8"></head>
 
-<body onload="load()"><h1>Validate Device</h1>
+<body><h1>Validate Device</h1>
 <h3>Current TOTP for (""" + name + ') ' + str(30-int(time.time()%30)) + ' seconds to rollover: ' + currentTOTP(name) + """</h3>
 <h3>HOTP counter: """ + str(HOTP_COUNTER) + '</h3><h3>Current HOTP token: ' + currentHOTP(name) + """</h3>
-<img src='""" + qrURL + """'nothing.jpg" id="qr_image" name="qr_image"/>
+<img src='""" + qrURL + """' id="qr_image" name="qr_image"/>
 <form action="/registerUser">
   <label for="username">Register User:</label>
   <input type="text" name="name" placeholder="username">
@@ -135,13 +135,6 @@ See user data: /?name=[yourname]<br/>
 Add new account: /registerUser?name=[yourname]?secret=[yoursecret]<br/>
 Validate TOPT: /validateTOTP?name=[yourname]?code=[your topt code]<br/>
 Validate HOPT: /validateHOTP?name=[yourname]?code=[your hopt code]</body>
-<script type="text/javascript">
-function load() {
-var secret = '""" + secret + """';
-var name = '""" + name + """';
-document.getElementById('qr_image').src = '""" + qrURL + """';
-}
-</script>
 </html>"""
     return html
 

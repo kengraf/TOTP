@@ -98,7 +98,7 @@ def defaultPage(query_components):
         name = 'unknown'
         secret = SECRETS.get(name)
 
-    gURL = 'https://chart.googleapis.com/chart?chs=200x200&chld=M|0&cht=qr&chl'
+    gURL = 'https://chart.googleapis.com/chart?chs=200x200&chld=M|0&cht=qr&choe=UTF-8&chl='
     gArg = '/validateTOTP?' + name + '&secret=' + secret
     qrURL = gURL + HOST_URL + gArg
     html = """<!DOCTYPE html>
@@ -107,7 +107,7 @@ def defaultPage(query_components):
 <body onload="load()"><h1>Validate Device</h1>
 <h3>Current TOTP for (""" + name + ') ' + str(30-int(time.time()%30)) + ' seconds to rollover: ' + currentTOTP(name) + """</h3>
 <h3>HOTP counter: """ + str(HOTP_COUNTER) + '</h3><h3>Current HOTP token: ' + currentHOTP(name) + """</h3>
-<img src="nothing.jpg" id="qr_image" name="qr_image"/>
+<img src='""" + qrURL + """'nothing.jpg" id="qr_image" name="qr_image"/>
 <form action="/registerUser">
   <label for="username">Register User:</label>
   <input type="text" name="name" placeholder="username">

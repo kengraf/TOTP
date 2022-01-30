@@ -103,13 +103,7 @@ def defaultPage(query_components):
     qrURL = gURL + HOST_URL + gArg
     html = """<!DOCTYPE html>
 <html><head><meta charset="UTF-8"></head>
-<script type="text/javascript">
-function load() {
-var secret = '""" + secret + """';
-var name = '""" + name + """';
-document.getElementById('qr_image').src = '""" + qrURL + """';
-}
-</script>
+
 <body onload="load()"><h1>Validate Device</h1>
 <h3>Current TOTP for (""" + name + ') ' + str(30-int(time.time()%30)) + ' seconds to rollover: ' + currentTOTP(name) + """</h3>
 <h3>HOTP counter: """ + str(HOTP_COUNTER) + '</h3><h3>Current HOTP token: ' + currentHOTP(name) + """</h3>
@@ -140,7 +134,15 @@ Replace [yoursecret] with your 16 character base32 value<br/>
 See user data: /?name=[yourname]<br/>
 Add new account: /registerUser?name=[yourname]?secret=[yoursecret]<br/>
 Validate TOPT: /validateTOTP?name=[yourname]?code=[your topt code]<br/>
-Validate HOPT: /validateHOTP?name=[yourname]?code=[your hopt code]</body></html>"""
+Validate HOPT: /validateHOTP?name=[yourname]?code=[your hopt code]</body>
+<script type="text/javascript">
+function load() {
+var secret = '""" + secret + """';
+var name = '""" + name + """';
+document.getElementById('qr_image').src = '""" + qrURL + """';
+}
+</script>
+</html>"""
     return html
 
 action_statements = {

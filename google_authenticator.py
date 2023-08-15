@@ -172,7 +172,7 @@ class OTPserver(BaseHTTPRequestHandler):
 class ThreadingSimpleServer(ThreadingMixIn,HTTPServer):
     pass
 
-def startServer(host='', port=8080):
+def startServer(host='', port=8888):
     global HOST_URL
     try:
         # Create a web server and define the handler to manage the incoming request
@@ -217,5 +217,5 @@ if __name__ == "__main__":
     if len(sys.argv) == 2:
         PORT = sys.argv[1]
     else:
-        PORT = 8080
+        PORT = 8888
     startServer( HOST, PORT)

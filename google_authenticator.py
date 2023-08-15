@@ -108,21 +108,21 @@ def defaultPage(query_components):
 <h3>Current TOTP for (""" + name + ') ' + str(30-int(time.time()%30)) + ' seconds to rollover: ' + currentTOTP(name) + """</h3>
 <h3>HOTP counter: """ + str(HOTP_COUNTER) + '</h3><h3>Current HOTP token: ' + currentHOTP(name) + """</h3>
 <img src='""" + qrURL + """' id="qr_image" name="qr_image"/>
-<form action="/registerUser">
+<form action="./registerUser">
   <label for="username">Register User:</label>
   <input type="text" name="name" placeholder="username">
   <label for="secret">Secret:</label>
   <input type="text" name="secret" value='""" + generateSecret() + """'>
   <input type="submit" value="registerUser">
 </form>
-<form action="/validateTOTP">
+<form action="./validateTOTP">
     <label for="username">Validate TOPT for user:</label>
     <input type="text" name="name" placeholder="username">
     <label for="code">Code:</label>
     <input type="text" name="code" placeholder='code'>
     <input type="submit" value="validateTOTP">
 </form>
-<form action="/validateHOTP">
+<form action=":8080/validateHOTP">
     <label for="username">Validate HOPT for user:</label>
     <input type="text" name="name" placeholder="username">
     <label for="code">Code:</label>

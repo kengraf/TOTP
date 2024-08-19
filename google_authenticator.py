@@ -85,22 +85,17 @@ def registerUser(query_components):
     html = defaultPage(query_components)
     return html + '<h1>' + user + ' registered with secret: ' + secret + '</h1>'
 
-def showQR1(secret, name):
-    gURL = 'https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl='
-    gArg = '/validateTOTP?' + name + '?secret=' + secret
-    html = requests.get(gURL + HOST_URL + gArg)
-    return html
-
 def defaultPage(query_components):
+    host= socket.gethostname()
     name = query_components.get('name', 'unknown')
     secret = SECRETS.get(name)
     if secret == None:
         name = 'unknown'
         secret = SECRETS.get(name)
 
-    gURL = 'https://chart.googleapis.com/chart?chs=200x200&cht=qr&choe=UTF-8&chl='
-    gArg = '/validateTOTP?' + name + '&secret=' + secret
-    qrURL = gURL + HOST_URL + gArg
+    gURL = 'https://quickchart.io/chart?chs=300x300&cht=qr&choe=UTF-8&chl='
+    gArg = 'otpauth://totp/{}:{}%3Fsecret={}'.format(host,name,secret)
+    qrURL = gURL + gArg
     html = """<!DOCTYPE html>
 <html><head><meta charset="UTF-8"></head>
 
@@ -114,14 +109,14 @@ def defaultPage(query_components):
   <label for="secret">Secret:</label>
   <input type="text" name="secret" value='""" + generateSecret() + """'>
   <input type="submit" value="registerUser">
-</form>
+</form><br>
 <form action="/validateTOTP">
     <label for="username">Validate TOPT for user:</label>
     <input type="text" name="name" placeholder="username">
     <label for="code">Code:</label>
     <input type="text" name="code" placeholder='code'>
     <input type="submit" value="validateTOTP">
-</form>
+</form><br>
 <form action="/validateHOTP">
     <label for="username">Validate HOPT for user:</label>
     <input type="text" name="name" placeholder="username">
@@ -215,7 +210,7 @@ def selfTest():
 if __name__ == "__main__":
     HOST = socket.gethostbyname(socket.gethostname())
     if len(sys.argv) == 2:
-        PORT = sys.argv[1]
+        PORT = int(sys.argv[1])
     else:
         PORT = 8888
     startServer( HOST, PORT)
